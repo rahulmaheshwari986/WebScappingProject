@@ -28,16 +28,16 @@ class Review:
 	reviewUserRating = -1
 	reviewUseful = 0
 	reviewTotalVote = 0
-	reviews = []
+	reviewContent = ""
 	
-	def __init__(self, reviewTitle, reviewAuthor, reviewDate, reviewUserRating, reviewUseful, reviewTotalVote, reviews):
+	def __init__(self, reviewTitle, reviewAuthor, reviewDate, reviewUserRating, reviewUseful, reviewTotalVote, reviewContent):
 		self.reviewTitle = reviewTitle
 		self.reviewAuthor = reviewAuthor
 		self.reviewDate = reviewDate
 		self.reviewUserRating = reviewUserRating
 		self.reviewUseful = reviewUseful
 		self.reviewTotalVote = reviewTotalVote
-		self.reviews = reviews
+		self.reviewContent = reviewContent
 
 def getMovieTitlesByGenres(genres, noMovies):
 	step = 50
@@ -180,7 +180,7 @@ def getMovieAttributes(all_movie_ids):
 
 
 all_movies = getMovieTitlesByGenres("action", 100)
-#all_movie_reviews = getMovieAttributes(["tt1392190"])
+#all_movie_reviews = getMovieAttributes(["tt2094766"])
 all_movie_reviews = getMovieAttributes(all_movies)
 
 json_data = simplejson.dumps(all_movie_reviews, indent=4, skipkeys=True, sort_keys=True, default=lambda o: o.__dict__)
