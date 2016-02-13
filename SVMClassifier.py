@@ -13,6 +13,11 @@ import simplejson
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import svm
 from sklearn.metrics import classification_report
+from nltk.tokenize.regexp import wordpunct_tokenize
+
+def tokenize(x):
+    tokens = [w for w in wordpunct_tokenize(x) if len(w)>3]
+    return tokens
 
 print("Loading file....")
 fd = open('imdbMovieReviews3.txt', 'r')
@@ -21,6 +26,7 @@ fd.close()
 data = simplejson.loads(text)
 
 reviews = []
+print("Remove punctuation, stop words....")
 for i in data:
     reviews.extend(i["reviews"])
 
@@ -71,7 +77,7 @@ for r in neg_reviews_test:
     # Create feature vectors
 print("Create feature vectors...")
 
-vectorizer = TfidfVectorizer(min_df=5, max_df = 0.8, sublinear_tf=True, use_idf=True, decode_error='ignore', strip_accents='unicode', ngram_range=(1, 3))
+vectorizer = TfidfVectorizer(min_df=3, max_df = 0.8, sublinear_tf=True, use_idf=True, decode_error='ignore', strip_accents='unicode', ngram_range=(1, 2), tokenizer=tokenize)
 train_vectors = vectorizer.fit_transform(train_data)
 test_vectors = vectorizer.transform(test_data)
 
