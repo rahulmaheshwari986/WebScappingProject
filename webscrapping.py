@@ -21,6 +21,7 @@ class Movie:
         self.reviews = reviews
         
 class Review:
+<<<<<<< HEAD
     reviewTitle = ""
     reviewAuthor = ""
     reviewDate = ""
@@ -44,6 +45,24 @@ def cleanText(text):
     text = text.replace("\r", "")
 
     return text
+=======
+	reviewTitle = ""
+	reviewAuthor = ""
+	reviewDate = ""
+	reviewUserRating = -1
+	reviewUseful = 0
+	reviewTotalVote = 0
+	reviewContent = ""
+	
+	def __init__(self, reviewTitle, reviewAuthor, reviewDate, reviewUserRating, reviewUseful, reviewTotalVote, reviewContent):
+		self.reviewTitle = reviewTitle
+		self.reviewAuthor = reviewAuthor
+		self.reviewDate = reviewDate
+		self.reviewUserRating = reviewUserRating
+		self.reviewUseful = reviewUseful
+		self.reviewTotalVote = reviewTotalVote
+		self.reviewContent = reviewContent
+>>>>>>> refs/remotes/tthuonghn/master
 
 def getMovieTitlesByGenres(genres, noMovies):
     step = 50
