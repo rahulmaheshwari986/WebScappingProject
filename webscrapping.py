@@ -25,19 +25,25 @@ class Review:
 	reviewTitle = ""
 	reviewAuthor = ""
 	reviewDate = ""
-	reviewUserRating = -1
+	reviewRating = -1
 	reviewUseful = 0
 	reviewTotalVote = 0
 	reviewContent = ""
 	
-	def __init__(self, reviewTitle, reviewAuthor, reviewDate, reviewUserRating, reviewUseful, reviewTotalVote, reviewContent):
+	def __init__(self, reviewTitle, reviewAuthor, reviewDate, reviewRating, reviewUseful, reviewTotalVote, reviewContent):
 		self.reviewTitle = reviewTitle
 		self.reviewAuthor = reviewAuthor
 		self.reviewDate = reviewDate
-		self.reviewUserRating = reviewUserRating
+		self.reviewRating = reviewRating
 		self.reviewUseful = reviewUseful
 		self.reviewTotalVote = reviewTotalVote
 		self.reviewContent = reviewContent
+
+def cleanText(text):
+    text = text.replace("<br>", "")
+    text = text.replace("\n", " ")
+    text = text.replace("\r", "")
+    return text
 
 def getMovieTitlesByGenres(genres, noMovies):
 	step = 50
@@ -69,7 +75,7 @@ def getMovieReviews(link):
         reviewTitleList = []
         reviewAuthorList = []
         reviewDateList = []
-        reviewUserRatingList = []
+        reviewRatingList = []
         reviewUsefulList = []
         reviewTotalVoteList = []
         reviewList = []
@@ -78,16 +84,7 @@ def getMovieReviews(link):
             small_tags = review.find_all("small")
             anchor_tags = review.find_all("a")
             header_tags = review.find_all("h2")
-            rating_tags = review.find_all("img")
-            rating_alt = -1
-            
-            if len(rating_tags) > 0:
-            	for rating in rating_tags:
-            		alt = rating.get("alt")
-            		if alt != None and alt.find("/") > 0:
-            			rating_alt = alt[:alt.find("/")]
-            			break		        				
-            reviewUserRatingList.append(rating_alt)
+            img_tags = review.find_all("img")
     
             if (len(small_tags) != 0):
                 reviewTitleList.append(header_tags[0].find(text=True)) #Title
@@ -108,16 +105,29 @@ def getMovieReviews(link):
                 else:
                 	reviewUsefulList.append(0)
                 	reviewTotalVoteList.append(0)
+                
+            rating_alt = -1
+            
+            if len(img_tags) > 0:
+            	for rating in img_tags:
+            		alt = rating.get("alt")
+            		if alt != None and alt.find("/") > 0:
+            			rating_alt = alt[:alt.find("/")]
+            			break		        				
+            reviewRatingList.append(rating_alt)
     
         i = 0
+        j = 0
         for text in text_tags:
             i = i+1
-            if ((i > 5) and (text.find(text=True) != "*** This review may contain spoilers ***")):
-                reviewList.append(text.find(text=True))           #Text
+            if (i > 5) and (text.find(text=True) != None) and (text.find(text=True) != "*** This review may contain spoilers ***"):
+                if j < len(reviewTitleList):
+                    reviewList.append(cleanText(text.find(text=True)))          #Text
+                    j = j+1 
             
         i = 0
         while i < len(reviewTitleList):
-        	Review_List.append(Review(reviewTitleList[i], reviewAuthorList[i], reviewDateList[i], reviewUserRatingList[i], reviewUsefulList[i], reviewTotalVoteList[i], reviewList[i]))
+        	Review_List.append(Review(reviewTitleList[i], reviewAuthorList[i], reviewDateList[i], reviewRatingList[i], reviewUsefulList[i], reviewTotalVoteList[i], reviewList[i]))
         	i = i+1
         
     return Review_List;
@@ -179,12 +189,12 @@ def getMovieAttributes(all_movie_ids):
 	return(movies)
 
 
-all_movies = getMovieTitlesByGenres("action", 100)
-#all_movie_reviews = getMovieAttributes(["tt2094766"])
+all_movies = getMovieTitlesByGenres("action", 200)
+#all_movie_reviews = getMovieAttributes(["tt1375666"])
 all_movie_reviews = getMovieAttributes(all_movies)
 
 json_data = simplejson.dumps(all_movie_reviews, indent=4, skipkeys=True, sort_keys=True, default=lambda o: o.__dict__)
-fd = open('imdbMovieReviews1.txt', 'w')
+fd = open('imdbMovieReviews3.txt', 'w')
 fd.write(json_data)
 fd.close()
 
