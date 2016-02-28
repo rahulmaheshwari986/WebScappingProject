@@ -1,0 +1,43 @@
+Loading file....
+Total reviews:7921
+Create training & test data, 75%:training, 25%:test....
+No pos reviews: 3999
+No neg reviews: 2415
+No pos reviews training: 2999
+No pos reviews test: 1000
+No neg reviews training: 1811
+No neg reviews test: 604
+Create feature vectors...
+Perform classification with SVM.LinearSVC
+Results for LinearSVC()
+Training time: 0.248692s; Prediction time: 0.001467s
+0.82855361596
+             precision    recall  f1-score   support
+
+   negative       0.84      0.67      0.75       604
+   positive       0.82      0.92      0.87      1000
+
+avg / total       0.83      0.83      0.82      1604
+
+Create training & test data, 75%:training, 25%:test....
+No pos reviews: 3999
+No neg reviews: 2415
+No pos reviews training: 2999
+No pos reviews test: 1000
+No neg reviews training: 1811
+No neg reviews test: 604
+Create feature vectors...
+Perform classification with SVM.LinearSVC
+Results for LinearSVC()
+Training time: 0.184660s; Prediction time: 0.001254s
+0.85349127182
+             precision    recall  f1-score   support
+
+   negative       0.87      0.72      0.79       604
+   positive       0.84      0.94      0.89      1000
+
+avg / total       0.86      0.85      0.85      1604
+
+logout
+
+[Process completed]

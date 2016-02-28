@@ -1,114 +1,70 @@
-import simplejson
 import nltk
-import itertools
-from nltk.collocations import BigramCollocationFinder
-from nltk.metrics import BigramAssocMeasures
-import collections
+from sklearn.metrics import classification_report
+from sklearn.metrics import accuracy_score
+from loadingReviews import loadReviews
+from loadingReviews import textProcessing
+from loadingReviews import generateTrainingTestSet
 
-def bigram_word_feats(words, score_fn=BigramAssocMeasures.chi_sq, n=100):
-	bigram_finder = BigramCollocationFinder.from_words(words)
-	bigrams = bigram_finder.nbest(score_fn, n)
-	return dict([(ngram, True) for ngram in itertools.chain(words, bigrams)])
+def unigramNaiveBayesClassifier(reviews_training, reviews_test):
+	reviews_trainingsplit = []
+	for r in reviews_training:
+		reviews_trainingsplit.append((r[0].split(), r[1]))
 	
-print("Loading file....")
-fd = open('imdbMovieReviews3.txt', 'r')
-text = fd.read()
-fd.close()
-data = simplejson.loads(text)
+	all_words = []
+	for r in reviews_trainingsplit:
+		all_words.extend(r[0])
 
-reviews = []
-print("Reading reviews....")
-for i in data:
-	reviews.extend(i["reviews"])
-
-for review in reviews:
-#	if review["reviewContent"] != None:
-#		tokenizer = RegexpTokenizer(r'\w+')
-#		tokens = tokenizer.tokenize(review["reviewContent"].lower())
-		#filtered_words = [w for w in tokens if not w in set(stopwords.words('english'))]
-		review["reviewContent"] = review["reviewContent"].lower()
-
-print("Separating Pos Neg reviews....")
-#get positive reviews
-pos_reviews = []
-for i in reviews:
-	if i["reviewContent"] != None and int(i["reviewRating"]) >= 7 and int(i["reviewUseful"]) > 0:
-		i["userSentiment"] = "positive"
-		pos_reviews.append(i)
-
-#get negative reviews
-neg_reviews = []
-for i in reviews:
-	if i["reviewContent"] != None and int(i["reviewRating"]) <= 4 and int(i["reviewRating"]) > 0 and int(i["reviewTotalVote"]) > 0:
-		i["userSentiment"] = "negative"
-		neg_reviews.append(i)
-
-print("No pos reviews: " + str(len(pos_reviews)))
-print("No neg reviews: " + str(len(neg_reviews)))
-
-#get positive reviews training
-#pos_reviews_training = sorted(pos_reviews, key=lambda k: int(k['reviewTotalVote']), reverse=True)
-#pos_reviews_training = pos_reviews_training[:2500]
-#pos_reviews_training = sorted(pos_reviews_training, key=lambda k: int(k['reviewUseful'])/int(k['reviewTotalVote']), reverse=True)
-pos_reviews = sorted(pos_reviews, key=lambda k: int(k['reviewUseful']), reverse=True)
-pos_reviews_training = pos_reviews[:(len(pos_reviews) * 3/4)]
-pos_reviews_test = pos_reviews[(len(pos_reviews) * 3/4):]
-for p in pos_reviews_training:
-	p["sentiment"] = "positive"
-
-#get negative reviews training
-#neg_reviews_training = sorted(neg_reviews, key=lambda k: int(k['reviewTotalVote']), reverse=True)
-#neg_reviews_training = neg_reviews_training[:2500]
-#neg_reviews_training = sorted(neg_reviews_training, key=lambda k: int(k['reviewUseful'])/int(k['reviewTotalVote']), reverse=True)
-neg_reviews = sorted(neg_reviews, key=lambda k: int(k['reviewUseful']), reverse=True)
-neg_reviews_training = neg_reviews[:(len(neg_reviews) * 3/4)]
-neg_reviews_test = neg_reviews[(len(neg_reviews) * 3/4):]
-for n in neg_reviews_training:
-	n["sentiment"] = "negative"
-
-print("No pos reviews training: " + str(len(pos_reviews_training)))
-print("No pos reviews test: " + str(len(pos_reviews_test)))
-print("No neg reviews training: " + str(len(neg_reviews_training)))
-print("No neg reviews test: " + str(len(neg_reviews_test)))
-
-reviews_training = []
-for r in pos_reviews_training + neg_reviews_training:
-	#words_filtered = [e.lower() for e in r["reviewContent"].split() if len(e) >= 3]
-	reviews_training.append((bigram_word_feats(r["reviewContent"].split()), r["sentiment"]))
+	wordlist = nltk.FreqDist(all_words)
+	word_features = set(wordlist.keys())
 	
+	#Function to extract unigram
+	def extract_features(document):
+		document_words = set(document)
+		features = {}
+		for word in word_features:
+			features['contains(%s)' % word] = (word in document_words)
+		return features
+	
+	print("Training model....")
+	reviews_training_set = nltk.classify.apply_features(extract_features, reviews_trainingsplit)
+	classifier = nltk.NaiveBayesClassifier.train(reviews_training_set)
 
-for r in pos_reviews_test + neg_reviews_test:
-	#words_filtered = [e.lower() for e in r["reviewContent"].split() if len(e) >= 3]
-	words_filtered = [e.lower() for e in r["reviewContent"].split() if len(e) >= 3]
-	r["reviewContent"] = bigram_word_feats(r["reviewContent"].split())
+	print("Running classifier....")
+	test_labels = []
+	prediction = []
+	
+	for r in reviews_test:
+		test_labels.append(r[1])	
+		prediction.append(classifier.classify(extract_features(r[0].split())))
 
-print("Training model....")
-#reviews_training_set = nltk.classify.apply_features(extract_features, reviews_training)
-classifier = nltk.NaiveBayesClassifier.train(reviews_training)
+	print("Results....")
+	print(accuracy_score(test_labels, prediction))
+	print(classification_report(test_labels, prediction))
+	
+#load reviews
+reviews = loadReviews("imdbMovieReviews3.txt")
 
-print("Running classifier....")
-result = []
-refsets = collections.defaultdict(set)
-testsets = collections.defaultdict(set)
+#unigram NV without title
+processedReviews = textProcessing(reviews, False, 3)
+result = generateTrainingTestSet(processedReviews, False)
+reviews_training = result[0]
+reviews_test = result[1]
+print("NaiveBayes-Unigram without Review title....")
+unigramNaiveBayesClassifier(reviews_training, reviews_test)
 
-for r, (r["reviewContent"], r["userSentiment"]) in pos_reviews_test + neg_reviews_test:
-	refsets[r["userSentiment"]].add(r)
-	#r["naiveBayesClassifierResult"] = classifier.classify(extract_features(r["reviewContent"].split()))
-	r["naiveBayesClassifierResult"] = classifier.classify(r["reviewContent"])
-	observed = r["naiveBayesClassifierResult"]
-	testsets[observed].add(r["reviewContent"])
-	result.append(r)
+#unigram NV without title and remove stopwords
+processedReviews = textProcessing(reviews, True, 3)
+result = generateTrainingTestSet(processedReviews, False)
+reviews_training = result[0]
+reviews_test = result[1]
+print("NaiveBayes-Unigram without Review title and without stopwords....")
+unigramNaiveBayesClassifier(reviews_training, reviews_test)
 
+#unigram NV with title and stopwords
+processedReviews = textProcessing(reviews, False, 3)
+result = generateTrainingTestSet(processedReviews, True)
+reviews_training = result[0]
+reviews_test = result[1]
+print("NaiveBayes-Unigram with Review title and with stopwords....")
+unigramNaiveBayesClassifier(reviews_training, reviews_test)
 
-print("Results....")
-
-print 'accuracy:', nltk.classify.util.accuracy(classifier, testsets)
-print 'pos precision:', nltk.metrics.precision(refsets['positive'], testsets['positive'])
-print 'pos recall:', nltk.metrics.recall(refsets['positive'], testsets['positive'])
-print 'neg precision:', nltk.metrics.precision(refsets['negative'], testsets['negative'])
-print 'neg recall:', nltk.metrics.recall(refsets['negative'], testsets['negative'])
-
-json_data = simplejson.dumps(result, indent=4, skipkeys=True, sort_keys=True, default=lambda o: o.__dict__)
-fd = open('result-content.txt', 'w')
-fd.write(json_data)
-fd.close()
